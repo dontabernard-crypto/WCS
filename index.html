@@ -1,0 +1,326 @@
+// Wade Compliance Solutions - Optimized JavaScript
+(function() {
+    'use strict';
+
+    // Performance optimization: Use requestIdleCallback for non-critical tasks
+    function runWhenIdle(fn) {
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(fn);
+        } else {
+            setTimeout(fn, 1);
+        }
+    }
+
+    // Mobile menu functionality
+    function initMobileMenu() {
+        const mobileMenu = document.getElementById('mobile-menu');
+        const nav = document.querySelector('nav ul');
+        
+        if (mobileMenu && nav) {
+            mobileMenu.addEventListener('click', function() {
+                nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            nav.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    nav.style.display = 'none';
+                    mobileMenu.classList.remove('active');
+                }
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!mobileMenu.contains(e.target) && !nav.contains(e.target)) {
+                    nav.style.display = 'none';
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    // Smooth scrolling for anchor links
+    function initSmoothScrolling() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                
+                e.preventDefault();
+                const target = document.querySelector(href);
+                
+                if (target) {
+                    const headerHeight = document.querySelector('header').offsetHeight;
+                    const targetPosition = target.offsetTop - headerHeight - 20;
+                    
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    }
+
+    // Intersection Observer for fade-in animations
+    function initAnimations() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.service-card, .benefit, .fade-in').forEach(el => {
+            el.classList.add('fade-in');
+            observer.observe(el);
+        });
+    }
+
+    // Lazy loading for images
+    function initLazyLoading() {
+        if ('loading' in HTMLImageElement.prototype) {
+            // Native lazy loading is supported
+            document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+                img.src = img.dataset.src || img.src;
+            });
+        } else {
+            // Fallback for browsers without native lazy loading
+            const imageObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src || img.src;
+                        img.classList.remove('lazy');
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+
+            document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+                img.classList.add('lazy');
+                imageObserver.observe(img);
+            });
+        }
+    }
+
+    // Form handling
+    function initFormHandling() {
+        const forms = document.querySelectorAll('form');
+        
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Basic form validation
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('error');
+                        field.addEventListener('input', function() {
+                            this.classList.remove('error');
+                        }, { once: true });
+                    }
+                });
+                
+                if (isValid) {
+                    // Show success message or submit to backend
+                    const button = form.querySelector('button[type="submit"]');
+                    const originalText = button.textContent;
+                    button.textContent = 'Sending...';
+                    button.disabled = true;
+                    
+                    // Simulate form submission
+                    setTimeout(() => {
+                        button.textContent = 'Message Sent!';
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.disabled = false;
+                            form.reset();
+                        }, 2000);
+                    }, 1000);
+                }
+            });
+        });
+    }
+
+    // Performance: Preload critical resources
+    function preloadCriticalResources() {
+        const criticalImages = [
+            '/images/logo.webp',
+            '/images/nist-icon.webp',
+            '/images/cmmc-icon.webp'
+        ];
+        
+        criticalImages.forEach(src => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'image';
+            link.href = src;
+            document.head.appendChild(link);
+        });
+    }
+
+    // Core Web Vitals optimization
+    function optimizeWebVitals() {
+        // Minimize layout shift
+        document.querySelectorAll('img').forEach(img => {
+            if (!img.width || !img.height) {
+                img.addEventListener('load', function() {
+                    // Force reflow to prevent layout shift
+                    this.style.width = this.naturalWidth + 'px';
+                    this.style.height = this.naturalHeight + 'px';
+                });
+            }
+        });
+
+        // Optimize first input delay
+        document.addEventListener('click', function(e) {
+            // Add visual feedback for better perceived performance
+            if (e.target.classList.contains('cta-button')) {
+                e.target.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    e.target.style.transform = '';
+                }, 100);
+            }
+        });
+    }
+
+    // Service Worker registration for caching
+    function registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            runWhenIdle(() => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('Service Worker registration failed:', err);
+                });
+            });
+        }
+    }
+
+    // Analytics and tracking (placeholder)
+    function initAnalytics() {
+        // Track page views
+        if (typeof gtag !== 'undefined') {
+            gtag('config', 'GA_MEASUREMENT_ID', {
+                page_title: document.title,
+                page_location: window.location.href
+            });
+        }
+
+        // Track clicks on CTA buttons
+        document.querySelectorAll('.cta-button').forEach(button => {
+            button.addEventListener('click', function() {
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'click', {
+                        event_category: 'CTA',
+                        event_label: this.textContent.trim()
+                    });
+                }
+            });
+        });
+
+        // Track form submissions
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'form_submit', {
+                        event_category: 'Contact',
+                        event_label: 'Contact Form'
+                    });
+                }
+            });
+        });
+    }
+
+    // Accessibility improvements
+    function enhanceAccessibility() {
+        // Add skip navigation link
+        const skipLink = document.createElement('a');
+        skipLink.href = '#main-content';
+        skipLink.textContent = 'Skip to main content';
+        skipLink.className = 'skip-link';
+        skipLink.style.cssText = `
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #1e3a8a;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 1000;
+            border-radius: 4px;
+        `;
+        
+        skipLink.addEventListener('focus', function() {
+            this.style.top = '6px';
+        });
+        
+        skipLink.addEventListener('blur', function() {
+            this.style.top = '-40px';
+        });
+        
+        document.body.insertBefore(skipLink, document.body.firstChild);
+
+        // Add main content ID if it doesn't exist
+        const main = document.querySelector('main');
+        if (main && !main.id) {
+            main.id = 'main-content';
+        }
+
+        // Enhance keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Close mobile menu on escape
+                const nav = document.querySelector('nav ul');
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (nav && mobileMenu) {
+                    nav.style.display = 'none';
+                    mobileMenu.classList.remove('active');
+                }
+            }
+        });
+    }
+
+    // Initialize all functionality when DOM is ready
+    function init() {
+        initMobileMenu();
+        initSmoothScrolling();
+        
+        // Initialize animations after a short delay for better performance
+        runWhenIdle(initAnimations);
+        runWhenIdle(initLazyLoading);
+        runWhenIdle(initFormHandling);
+        runWhenIdle(enhanceAccessibility);
+        runWhenIdle(initCloudflareOptimizations);
+        runWhenIdle(initAnalytics);
+        
+        // Preload critical resources
+        preloadCriticalResources();
+    }
+
+    // DOM ready check
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Error handling
+    window.addEventListener('error', function(e) {
+        console.error('JavaScript error:', e.error);
+        // Optional: Send error to analytics or logging service
+    });
+
+})();
